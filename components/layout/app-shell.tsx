@@ -14,6 +14,7 @@ export function SidebarShell({
 }) {
   const home = getDashboardPath(role);
   const roleLabel = role === "DEVELOPER" ? "개발자 계정" : role === "TEACHER" ? "교사 계정" : "학생 계정";
+
   return (
     <div className="min-h-screen bg-background">
       <div className="grid min-h-screen lg:grid-cols-[280px_1fr]">
@@ -30,12 +31,16 @@ export function SidebarShell({
                 </Link>
               ) : null}
               {role === "DEVELOPER" ? (
-                <>
-                  <Link className="rounded-lg px-3 py-2 hover:bg-white/10" href="/dashboard/teacher">
-                    교사용 관리 화면
-                  </Link>
-                </>
+                <Link className="rounded-lg px-3 py-2 hover:bg-white/10" href="/dashboard/teacher">
+                  교사용 관리 화면
+                </Link>
               ) : null}
+              <Link className="rounded-lg px-3 py-2 hover:bg-white/10" href="/manual">
+                사용 매뉴얼
+              </Link>
+              <Link className="rounded-lg px-3 py-2 hover:bg-white/10" href="/about">
+                개발 동기
+              </Link>
             </nav>
             <div className="mt-auto rounded-xl bg-white/10 p-4">
               <p className="text-xs text-white/70">{roleLabel}</p>

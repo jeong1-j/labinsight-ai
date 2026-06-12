@@ -29,13 +29,14 @@ export function SchoolSearch({
 
   useEffect(() => {
     const handle = window.setTimeout(async () => {
-      if (query.trim().length < 2) {
+      const nextQuery = query.trim();
+      if (nextQuery.length < 2) {
         setSchools([]);
         return;
       }
 
       setLoading(true);
-      const response = await fetch(`/api/neis/schools?q=${encodeURIComponent(query.trim())}`);
+      const response = await fetch(`/api/neis/schools?q=${encodeURIComponent(nextQuery)}`);
       const data = await response.json().catch(() => ({ schools: [] }));
       setSchools(data.schools ?? []);
       setLoading(false);
@@ -55,7 +56,7 @@ export function SchoolSearch({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           className="pl-9"
-          placeholder="학교명 검색"
+          placeholder="예: 전남과학고, 대전중, 서울고"
           autoComplete="off"
         />
       </div>
@@ -76,10 +77,16 @@ export function SchoolSearch({
                 }}
               >
                 <span>
-                  <span className="block font-bold">{school.name}</span>
+                  <span className="flex flex-wrap items-center gap-2 font-bold">
+                    {school.name}
+                    {school.source === "DIRECT" ? (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-black text-amber-700">
+                        직접 입력
+                      </span>
+                    ) : null}
+                  </span>
                   <span className="block text-xs font-medium text-muted-foreground">
                     {school.officeName} · {school.type} · {school.address || "주소 정보 없음"}
-                    {school.source === "DIRECT" ? " · 직접 입력" : ""}
                   </span>
                 </span>
               </Button>
@@ -87,7 +94,7 @@ export function SchoolSearch({
           </div>
         ) : (
           <p className="px-2 py-1 text-sm font-semibold text-muted-foreground">
-            학교명을 2글자 이상 입력하고 검색 결과를 선택하세요. 결과가 없으면 직접 입력 후보가 표시됩니다.
+            학교명을 2글자 이상 입력하세요. 나이스 결과가 없을 때도 중학교/고등학교 직접 입력 후보가 표시됩니다.
           </p>
         )}
       </div>

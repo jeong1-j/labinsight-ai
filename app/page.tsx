@@ -15,32 +15,32 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const analysisSteps = [
   "실험 프로젝트 생성",
-  "CSV/Excel 또는 표 데이터 입력",
-  "결측값·이상값 자동 점검",
+  "스프레드시트 입력 또는 CSV/Excel 업로드",
+  "결측값·이상값·반복 측정 자동 점검",
   "그래프 추천과 AI 결과 해석",
   "오차 원인·변인 분석",
-  "보고서 초안과 교사 피드백"
+  "보고서 초안 작성과 교사 피드백"
 ];
 
 const featureCards = [
   {
-    title: "데이터 업로드",
-    body: "표 직접 입력, CSV, Excel 데이터를 저장하고 다시 조회합니다.",
+    title: "데이터 입력",
+    body: "구글 스프레드시트처럼 표에 직접 입력하거나 CSV, Excel 데이터를 업로드해 저장합니다.",
     icon: Upload
   },
   {
     title: "그래프 자동 생성",
-    body: "시간 흐름, 조건 비교, 변수 관계, 분포에 맞는 그래프를 추천합니다.",
+    body: "시간 흐름, 조건 비교, 두 변수 관계, 분포에 맞는 그래프를 추천하고 직접 바꿀 수 있습니다.",
     icon: LineChart
   },
   {
     title: "AI 실험 해석",
-    body: "가설 지지 여부, 오차율, 숨겨진 변인, 개선 방법을 분석합니다.",
+    body: "가설 지지 여부, 오차율, 숨겨진 변인, 개선 방법, 후속 연구까지 분석합니다.",
     icon: BrainCircuit
   },
   {
     title: "보고서 작성",
-    body: "AI 초안을 학생이 수정하고 PDF로 다운로드할 수 있습니다.",
+    body: "AI 초안과 내 작성을 비교하며 수정이 필요한 부분을 확인하고 PDF로 내려받습니다.",
     icon: FileText
   }
 ];
@@ -51,8 +51,14 @@ export default function Home() {
       <header className="bg-primary text-white">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <BrandLockup />
-          <nav className="flex items-center gap-2">
-            <Button asChild variant="ghost">
+          <nav className="flex flex-wrap items-center gap-2">
+            <Button asChild variant="ghost" className="text-white hover:bg-white/10 hover:text-white">
+              <Link href="/manual">사용 매뉴얼</Link>
+            </Button>
+            <Button asChild variant="ghost" className="text-white hover:bg-white/10 hover:text-white">
+              <Link href="/about">개발 동기</Link>
+            </Button>
+            <Button asChild variant="ghost" className="text-white hover:bg-white/10 hover:text-white">
               <Link href="/login">로그인</Link>
             </Button>
             <Button asChild variant="accent">
@@ -73,8 +79,9 @@ export default function Home() {
               LabInsight AI
             </h1>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
-              실험 데이터를 입력하면 그래프, 통계 요약, AI 해석, 오차 원인, 변인 분석, 보고서 초안까지 한
-              흐름으로 정리합니다. 학생은 탐구 과정을 기록하고, 교사는 분석 결과를 검토해 피드백을 반환합니다.
+              실험 데이터를 입력하면 그래프, 통계 요약, AI 해석, 오차 원인, 변인 분석, 보고서 초안까지
+              한 흐름으로 정리합니다. 학생은 탐구 과정을 기록하고, 교사는 분석 결과를 확인해 피드백을
+              학생에게 반환할 수 있습니다.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild variant="accent" size="lg">

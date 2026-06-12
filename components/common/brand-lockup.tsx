@@ -12,7 +12,7 @@ export function BrandLockup({ className, compact = false }: { className?: string
           LabInsight AI
         </div>
         <div className={cn("truncate leading-tight", compact ? "text-xs" : "text-sm")}>
-          전남과학고 실험 데이터 분석 플랫폼
+          학교 실험 데이터 분석 플랫폼
         </div>
       </div>
     </div>
