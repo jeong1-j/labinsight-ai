@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+}
+
+enum ProjectStatus {
+  DRAFT
+  DATA_UPLOADED
+  ANALYZED
+  REPORT_GENERATED
+  FEEDBACK_RECEIVED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  school       String
+  gradeOrClass String
+  createdAt    DateTime @default(now())
+
+  projects          Project[]         @relation("StudentProjects")
+  feedbacksGiven    TeacherFeedback[] @relation("TeacherFeedbacks")
+  feedbacksReceived TeacherFeedback[] @relation("StudentFeedbacks")
+}
+
+model Project {
+  id         String @id @default(cuid())
+  studentId String
+  student   User   @relation("StudentProjects", fields: [studentId], references: [id])
+
+  title               String
+  purpose             String
+  hypothesis          String
+  independentVariable String
+  dependentVariable   String
+  controlledVariables String
+  materials           String
+  method              String
+  theoryValue         String?
+  field               String
+  status              ProjectStatus @default(DRAFT)
+
+  experimentData ExperimentData?
+  analysisResult AnalysisResult?
+  report         Report?
+  feedbacks      TeacherFeedback[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ExperimentData {
+  id               String   @id @default(cuid())
+  projectId        String   @unique
+  project          Project  @relation(fields: [projectId], references: [id])
+  rawData          Json
+  columns          Json
+  uploadedFileName String?
+  createdAt        DateTime @default(now())
+}
+
+model AnalysisResult {
+  id                  String   @id @default(cuid())
+  projectId           String   @unique
+  project             Project  @relation(fields: [projectId], references: [id])
+  chartType           String
+  summaryStats        Json
+  interpretation      String
+  hypothesisResult    String
+  errorRate           Float?
+  errorAnalysis       Json
+  variableAnalysis    Json
+  researchSuggestions Json
+  createdAt           DateTime @default(now())
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  projectId String   @unique
+  project   Project  @relation(fields: [projectId], references: [id])
+  content   String
+  pdfUrl    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TeacherFeedback {
+  id        String @id @default(cuid())
+  teacherId String
+  studentId String
+  projectId String
+
+  teacher User    @relation("TeacherFeedbacks", fields: [teacherId], references: [id])
+  student User    @relation("StudentFeedbacks", fields: [studentId], references: [id])
+  project Project @relation(fields: [projectId], references: [id])
+
+  strengths    String
+  improvements String
+  suggestion   String
+  finalComment String
+
+  createdAt DateTime @default(now())
+}
