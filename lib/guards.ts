@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import type { AppRole } from "@/lib/roles";
 
 export async function requireSession() {
   const session = await getServerSession(authOptions);
@@ -9,9 +10,10 @@ export async function requireSession() {
   return session;
 }
 
-export async function requireRole(role: "STUDENT" | "TEACHER") {
+export async function requireRole(role: AppRole | AppRole[]) {
   const session = await requireSession();
-  if (session.user.role !== role) {
+  const allowedRoles = Array.isArray(role) ? role : [role];
+  if (!allowedRoles.includes(session.user.role)) {
     throw new Error("FORBIDDEN");
   }
   return session;

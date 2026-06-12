@@ -17,7 +17,8 @@ type DataRow = Record<string, string | number | boolean | null>;
 export default async function StudentDashboardPage() {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
-  if (session.user.role !== "STUDENT") redirect("/dashboard/teacher");
+  if (session.user.role === "TEACHER") redirect("/dashboard/teacher");
+  if (session.user.role === "DEVELOPER") redirect("/dashboard/developer");
 
   const projects = await prisma.project.findMany({
     where: { studentId: session.user.id },

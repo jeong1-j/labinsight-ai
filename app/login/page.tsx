@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getDashboardPath } from "@/lib/roles";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -42,7 +43,7 @@ export default function LoginPage() {
     }
 
     const session = await waitForSession();
-    router.replace(session?.user.role === "TEACHER" ? "/dashboard/teacher" : "/dashboard/student");
+    router.replace(getDashboardPath(session?.user.role));
     router.refresh();
   }
 

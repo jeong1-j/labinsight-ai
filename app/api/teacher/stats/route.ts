@@ -4,7 +4,7 @@ import { jsonError, requireRole } from "@/lib/guards";
 
 export async function GET() {
   try {
-    await requireRole("TEACHER");
+    await requireRole(["TEACHER", "DEVELOPER"]);
     const [studentCount, projectCount, analyzedCount, reportCount, feedbackCount, projects] =
       await Promise.all([
         prisma.user.count({ where: { role: Role.STUDENT } }),

@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { TEACHER_INVITE_CODE } from "@/lib/auth";
+import { DEVELOPER_INVITE_CODE, TEACHER_INVITE_CODE } from "@/lib/auth";
 
 const registerSchema = z
   .object({
@@ -13,8 +13,9 @@ const registerSchema = z
     school: z.string().trim().min(2, "학교를 검색해서 선택하세요."),
     studentNumber: z.string().optional(),
     gradeOrClass: z.string().optional(),
-    role: z.enum(["STUDENT", "TEACHER"]),
-    teacherCode: z.string().optional()
+    role: z.enum(["STUDENT", "TEACHER", "DEVELOPER"]),
+    teacherCode: z.string().optional(),
+    developerCode: z.string().optional()
   })
   .superRefine((value, context) => {
     const studentNumber = value.studentNumber ?? value.gradeOrClass;
@@ -32,6 +33,9 @@ export async function POST(request: NextRequest) {
     const body = registerSchema.parse(await request.json());
     if (body.role === "TEACHER" && body.teacherCode?.trim() !== TEACHER_INVITE_CODE) {
       return Response.json({ error: "교사 인증 코드가 올바르지 않습니다." }, { status: 403 });
+    }
+    if (body.role === "DEVELOPER" && body.developerCode?.trim() !== DEVELOPER_INVITE_CODE) {
+      return Response.json({ error: "개발자 인증 코드가 올바르지 않습니다." }, { status: 403 });
     }
 
     const passwordHash = await bcrypt.hash(body.password, 12);

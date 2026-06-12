@@ -2,8 +2,10 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import type { AppRole } from "@/lib/roles";
 
 export const TEACHER_INVITE_CODE = process.env.TEACHER_INVITE_CODE ?? "JSHS_TEACHER_2026";
+export const DEVELOPER_INVITE_CODE = process.env.DEVELOPER_INVITE_CODE ?? "LABINSIGHT_DEV_2026";
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -61,7 +63,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub ?? "";
-        session.user.role = token.role as "STUDENT" | "TEACHER";
+        session.user.role = token.role as AppRole;
         session.user.school = token.school as string;
         session.user.gradeOrClass = token.gradeOrClass as string;
       }

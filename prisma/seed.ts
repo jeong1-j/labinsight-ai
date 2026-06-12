@@ -53,6 +53,19 @@ async function main() {
     }
   });
 
+  await prisma.user.upsert({
+    where: { email: "developer@labinsight.local" },
+    update: {},
+    create: {
+      name: "LabInsight 개발자",
+      email: "developer@labinsight.local",
+      passwordHash,
+      role: Role.DEVELOPER,
+      school: "LabInsight AI",
+      gradeOrClass: ""
+    }
+  });
+
   if (process.env.ALLOW_DEMO_PROJECT !== "true") {
     return;
   }

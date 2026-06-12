@@ -13,10 +13,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { getDashboardPath, type AppRole } from "@/lib/roles";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [role, setRole] = useState<"STUDENT" | "TEACHER">("STUDENT");
+  const [role, setRole] = useState<AppRole>("STUDENT");
   const [school, setSchool] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -55,7 +56,7 @@ export default function RegisterPage() {
     }
 
     const session = await waitForSession();
-    router.replace(session?.user.role === "TEACHER" ? "/dashboard/teacher" : "/dashboard/student");
+    router.replace(getDashboardPath(session?.user.role));
     router.refresh();
   }
 
@@ -85,6 +86,7 @@ export default function RegisterPage() {
               <Select id="role" value={role} onChange={(event) => setRole(event.target.value as typeof role)}>
                 <option value="STUDENT">학생</option>
                 <option value="TEACHER">교사</option>
+                <option value="DEVELOPER">개발자</option>
               </Select>
             </div>
 
@@ -94,7 +96,7 @@ export default function RegisterPage() {
               <Field label="학번" name="studentNumber" placeholder="4자리 숫자" inputMode="numeric" pattern="\d{4}" />
             ) : (
               <div className="rounded-lg border border-border bg-[#F3F6FB] p-4 text-sm font-semibold text-muted-foreground sm:col-span-2">
-                교사 계정은 학번이나 담당 반을 입력하지 않습니다.
+                교사/개발자 계정은 학번이나 담당 반을 입력하지 않습니다.
               </div>
             )}
 
@@ -102,6 +104,13 @@ export default function RegisterPage() {
               <div className="grid gap-2 sm:col-span-2">
                 <Label htmlFor="teacherCode">교사 인증 코드</Label>
                 <Input id="teacherCode" name="teacherCode" placeholder="JSHS_TEACHER_2026" required />
+              </div>
+            ) : null}
+
+            {role === "DEVELOPER" ? (
+              <div className="grid gap-2 sm:col-span-2">
+                <Label htmlFor="developerCode">개발자 인증 코드</Label>
+                <Input id="developerCode" name="developerCode" placeholder="LABINSIGHT_DEV_2026" required />
               </div>
             ) : null}
 

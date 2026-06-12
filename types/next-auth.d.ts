@@ -7,14 +7,14 @@ declare module "next-auth" {
       name?: string | null;
       email?: string | null;
       image?: string | null;
-      role: "STUDENT" | "TEACHER";
+      role: "STUDENT" | "TEACHER" | "DEVELOPER";
       school: string;
       gradeOrClass: string;
     };
   }
 
   interface User {
-    role: "STUDENT" | "TEACHER";
+    role: "STUDENT" | "TEACHER" | "DEVELOPER";
     school: string;
     gradeOrClass: string;
   }
@@ -22,7 +22,7 @@ declare module "next-auth" {
 
 declare module "next-auth/jwt" {
   interface JWT {
-    role?: "STUDENT" | "TEACHER";
+    role?: "STUDENT" | "TEACHER" | "DEVELOPER";
     school?: string;
     gradeOrClass?: string;
   }

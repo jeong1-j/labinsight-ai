@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Download } from "lucide-react";
 import { toPng } from "html-to-image";
 import {
@@ -38,14 +38,38 @@ export function ExperimentChart({
   initialChartType?: "line" | "bar" | "scatter" | "histogram" | string;
 }) {
   const profile = useMemo(() => profileData(rows), [rows]);
+  const recommendedChart = normalizeChart(initialChartType) ?? profile.recommendedChart;
   const [chartType, setChartType] = useState<"line" | "bar" | "scatter" | "histogram">(
-    normalizeChart(initialChartType) ?? profile.recommendedChart
+    recommendedChart
   );
+  const [manualChartSelected, setManualChartSelected] = useState(false);
   const [xColumn, setXColumn] = useState(profile.guessedIndependent ?? Object.keys(rows[0] ?? {})[0] ?? "");
   const [yColumn, setYColumn] = useState(profile.guessedDependent ?? profile.numericColumns[0] ?? "");
   const chartRef = useRef<HTMLDivElement>(null);
 
   const histogramData = useMemo(() => histogramRows(rows, yColumn), [rows, yColumn]);
+
+  useEffect(() => {
+    if (!manualChartSelected) {
+      setChartType(recommendedChart);
+    }
+  }, [manualChartSelected, recommendedChart]);
+
+  useEffect(() => {
+    const keys = Object.keys(rows[0] ?? {});
+    if (!keys.includes(xColumn)) {
+      setXColumn(profile.guessedIndependent ?? keys[0] ?? "");
+    }
+  }, [profile.guessedIndependent, rows, xColumn]);
+
+  useEffect(() => {
+    if (!profile.numericColumns.includes(yColumn)) {
+      const guessed = profile.guessedDependent && profile.numericColumns.includes(profile.guessedDependent)
+        ? profile.guessedDependent
+        : profile.numericColumns[0];
+      setYColumn(guessed ?? "");
+    }
+  }, [profile.guessedDependent, profile.numericColumns, yColumn]);
 
   async function downloadChart() {
     if (!chartRef.current) return;
@@ -66,7 +90,7 @@ export function ExperimentChart({
         <div>
           <CardTitle>그래프 자동 생성</CardTitle>
           <div className="mt-2 flex flex-wrap gap-2">
-            <Badge variant="science">AI 추천: {chartLabels[profile.recommendedChart]}</Badge>
+            <Badge variant="science">자동 추천: {chartLabels[recommendedChart]}</Badge>
             <Badge variant="muted">행 {profile.rowCount}개</Badge>
           </div>
         </div>
@@ -79,7 +103,13 @@ export function ExperimentChart({
         <div className="grid gap-3 md:grid-cols-3">
           <div className="grid gap-2">
             <Label>그래프 유형</Label>
-            <Select value={chartType} onChange={(event) => setChartType(event.target.value as typeof chartType)}>
+            <Select
+              value={chartType}
+              onChange={(event) => {
+                setManualChartSelected(true);
+                setChartType(event.target.value as typeof chartType);
+              }}
+            >
               <option value="line">Line Chart</option>
               <option value="bar">Bar Chart</option>
               <option value="scatter">Scatter Plot</option>

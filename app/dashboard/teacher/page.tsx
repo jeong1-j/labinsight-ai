@@ -8,11 +8,12 @@ import { SidebarShell } from "@/components/layout/app-shell";
 import { StatCard } from "@/components/common/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { StudentProgressTable } from "@/components/teacher/student-progress-table";
+import { canReviewProjects } from "@/lib/roles";
 
 export default async function TeacherDashboardPage() {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
-  if (session.user.role !== "TEACHER") redirect("/dashboard/student");
+  if (!canReviewProjects(session.user.role)) redirect("/dashboard/student");
 
   const students = await prisma.user.findMany({
     where: { role: Role.STUDENT },
@@ -53,7 +54,7 @@ export default async function TeacherDashboardPage() {
   }).length;
 
   return (
-    <SidebarShell role="TEACHER" userName={session.user.name ?? "교사"}>
+    <SidebarShell role={session.user.role} userName={session.user.name ?? "교사"}>
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
         <div>
           <p className="text-sm font-bold text-science">교사용 대시보드</p>

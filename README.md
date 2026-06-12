@@ -4,12 +4,13 @@ AI 기반 학교 실험 데이터 분석 플랫폼입니다. 학생은 실험 �
 
 ## 주요 기능
 
-- 학생/교사 회원가입 및 로그인
+- 학생/교사/개발자 회원가입 및 로그인
 - 학생 4자리 학번 입력
 - 교사 인증 코드 기반 가입
+- 개발자 계정으로 전체 학생/교사/프로젝트 운영 현황 확인
 - 학교명 검색 및 직접 입력
 - 실험 프로젝트 생성
-- 표 직접 입력, CSV/Excel 업로드
+- 스프레드시트형 표 직접 입력, CSV/Excel 업로드
 - 결측값, 이상값, 숫자형/문자형 컬럼 점검
 - Recharts 기반 그래프 자동 추천
 - OpenAI API 또는 Mock AI 분석
@@ -40,6 +41,7 @@ http://localhost:3000
 ```txt
 학생: student@jshs.kr / password123
 교사: teacher@jshs.kr / password123
+개발자: developer@labinsight.local / password123
 ```
 
 이 계정은 `npm run db:seed`를 실행했을 때만 로컬 SQLite DB에 생성됩니다. 기본 seed는 프로젝트를 미리 만들지 않습니다. 데모 프로젝트까지 필요할 때만 `ALLOW_DEMO_PROJECT=true npm run db:seed`처럼 별도 허용값을 지정하세요. 실제 배포에서는 사용자가 `/register`에서 직접 가입합니다.
@@ -48,6 +50,12 @@ http://localhost:3000
 
 ```txt
 JSHS_TEACHER_2026
+```
+
+개발자 가입 코드:
+
+```txt
+LABINSIGHT_DEV_2026
 ```
 
 ## 실제 배포
@@ -73,6 +81,7 @@ DATABASE_URL="postgresql://..."
 NEXTAUTH_URL="https://your-project.vercel.app"
 NEXTAUTH_SECRET="긴_랜덤_문자열"
 TEACHER_INVITE_CODE="JSHS_TEACHER_2026"
+DEVELOPER_INVITE_CODE="LABINSIGHT_DEV_2026"
 OPENAI_API_KEY=""
 OPENAI_MODEL="gpt-4o-mini"
 NEIS_API_KEY=""

@@ -26,7 +26,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
 export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireSession();
-    if (session.user.role !== "TEACHER") {
+    if (session.user.role !== "TEACHER" && session.user.role !== "DEVELOPER") {
       throw new Error("FORBIDDEN");
     }
     const { id } = await context.params;

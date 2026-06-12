@@ -3,8 +3,9 @@
 import { useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Download, FileSpreadsheet, Loader2, Plus, Save, Sparkles, Trash2 } from "lucide-react";
+import { Download, FileSpreadsheet, Loader2, Save, Sparkles } from "lucide-react";
 import { ExperimentChart } from "@/components/charts/experiment-chart";
+import { SpreadsheetDataGrid } from "@/components/student/spreadsheet-data-grid";
 import { FeedbackForm } from "@/components/teacher/feedback-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { profileData, type DataRow } from "@/lib/chart-engine";
 import { parseExperimentFile } from "@/lib/file-parser";
+import type { AppRole } from "@/lib/roles";
 
 type JsonObject = Record<string, unknown>;
 
@@ -78,7 +80,7 @@ export function ProjectWorkspace({
   role
 }: {
   project: ProjectForWorkspace;
-  role: "STUDENT" | "TEACHER";
+  role: AppRole;
 }) {
   const router = useRouter();
   const [rows, setRows] = useState<DataRow[]>(project.experimentData?.rawData?.length ? project.experimentData.rawData : emptyRows);
@@ -87,36 +89,8 @@ export function ProjectWorkspace({
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState<"data" | "analysis" | "report" | "pdf" | null>(null);
   const reportRef = useRef<HTMLDivElement>(null);
-  const columns = useMemo(() => Object.keys(rows[0] ?? { day: "", value: "" }), [rows]);
   const profile = useMemo(() => profileData(rows), [rows]);
   const canEdit = role === "STUDENT";
-
-  function updateCell(rowIndex: number, column: string, value: string) {
-    setRows((current) =>
-      current.map((row, index) =>
-        index === rowIndex
-          ? {
-              ...row,
-              [column]: value
-            }
-          : row
-      )
-    );
-  }
-
-  function addRow() {
-    setRows((current) => [...current, Object.fromEntries(columns.map((column) => [column, ""]))]);
-  }
-
-  function removeRow(index: number) {
-    setRows((current) => current.filter((_, rowIndex) => rowIndex !== index));
-  }
-
-  function addColumn() {
-    const name = window.prompt("새 컬럼명");
-    if (!name) return;
-    setRows((current) => current.map((row) => ({ ...row, [name]: "" })));
-  }
 
   async function handleFile(file?: File) {
     if (!file) return;
@@ -132,23 +106,32 @@ export function ProjectWorkspace({
   async function saveData() {
     setBusy("data");
     setMessage("");
+    const saved = await persistData();
+    setBusy(null);
+    setMessage(saved ? "실험 데이터가 저장되었습니다." : "데이터 저장에 실패했습니다.");
+    if (saved) router.refresh();
+  }
+
+  async function persistData() {
     const response = await fetch(`/api/projects/${project.id}/data`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ rawData: normalizeRows(rows), uploadedFileName: null })
     });
-    setBusy(null);
-    if (!response.ok) {
-      setMessage("데이터 저장에 실패했습니다.");
-      return;
-    }
-    setMessage("실험 데이터가 저장되었습니다.");
-    router.refresh();
+    return response.ok;
   }
 
   async function runAnalysis() {
     setBusy("analysis");
     setMessage("");
+    if (canEdit) {
+      const saved = await persistData();
+      if (!saved) {
+        setBusy(null);
+        setMessage("AI 분석 전 데이터 저장에 실패했습니다.");
+        return;
+      }
+    }
     const response = await fetch(`/api/projects/${project.id}/analyze`, { method: "POST" });
     const data = await response.json().catch(() => ({}));
     setBusy(null);
@@ -246,14 +229,6 @@ export function ProjectWorkspace({
           <CardTitle>실험 데이터</CardTitle>
           {canEdit ? (
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={addColumn}>
-                <Plus className="h-4 w-4" />
-                컬럼
-              </Button>
-              <Button variant="outline" onClick={addRow}>
-                <Plus className="h-4 w-4" />
-                행
-              </Button>
               <Button variant="science" onClick={saveData} disabled={busy === "data"}>
                 {busy === "data" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 데이터 저장
@@ -273,46 +248,7 @@ export function ProjectWorkspace({
               />
             </div>
           ) : null}
-          <div className="overflow-x-auto rounded-xl border border-border">
-            <table className="w-full min-w-[680px] text-sm">
-              <thead className="bg-slate-50">
-                <tr>
-                  {columns.map((column) => (
-                    <th key={column} className="border-b border-border px-3 py-2 text-left font-bold">
-                      {column}
-                    </th>
-                  ))}
-                  {canEdit ? <th className="border-b border-border px-3 py-2" /> : null}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, rowIndex) => (
-                  <tr key={rowIndex} className="border-t border-border">
-                    {columns.map((column) => (
-                      <td key={column} className="px-2 py-2">
-                        {canEdit ? (
-                          <Input
-                            value={String(row[column] ?? "")}
-                            onChange={(event) => updateCell(rowIndex, column, event.target.value)}
-                            className="h-9"
-                          />
-                        ) : (
-                          <span className="px-2">{String(row[column] ?? "")}</span>
-                        )}
-                      </td>
-                    ))}
-                    {canEdit ? (
-                      <td className="w-12 px-2 py-2">
-                        <Button variant="outline" size="icon" onClick={() => removeRow(rowIndex)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    ) : null}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <SpreadsheetDataGrid rows={rows} onRowsChange={setRows} readOnly={!canEdit} />
 
           <div className="mt-4 grid gap-3 md:grid-cols-4">
             <QualityBadge label="행" value={`${profile.rowCount}개`} />
@@ -440,7 +376,7 @@ export function ProjectWorkspace({
         </CardContent>
       </Card>
 
-      {role === "TEACHER" ? <FeedbackForm projectId={project.id} /> : null}
+      {role === "TEACHER" || role === "DEVELOPER" ? <FeedbackForm projectId={project.id} /> : null}
 
       {message ? (
         <div className="fixed bottom-4 left-1/2 z-50 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 rounded-xl bg-primary px-4 py-3 text-center text-sm font-bold text-white shadow-portal">

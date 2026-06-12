@@ -22,6 +22,7 @@ export default function NewProjectPage() {
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/login");
     if (session?.user.role === "TEACHER") router.replace("/dashboard/teacher");
+    if (session?.user.role === "DEVELOPER") router.replace("/dashboard/developer");
   }, [router, session?.user.role, status]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {

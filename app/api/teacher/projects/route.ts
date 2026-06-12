@@ -3,7 +3,7 @@ import { jsonError, requireRole } from "@/lib/guards";
 
 export async function GET() {
   try {
-    await requireRole("TEACHER");
+    await requireRole(["TEACHER", "DEVELOPER"]);
     const projects = await prisma.project.findMany({
       include: {
         student: true,

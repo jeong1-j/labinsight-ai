@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import type { AppRole } from "@/lib/roles";
 
-export async function getAccessibleProject(projectId: string, userId: string, role: "STUDENT" | "TEACHER") {
+export async function getAccessibleProject(projectId: string, userId: string, role: AppRole) {
   const project = await prisma.project.findUnique({
     where: { id: projectId },
     include: {
