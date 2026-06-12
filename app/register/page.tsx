@@ -30,10 +30,11 @@ export default function RegisterPage() {
     const payload = Object.fromEntries(formData.entries());
     const email = String(payload.email ?? "").trim().toLowerCase();
     const password = String(payload.password ?? "");
+    const normalizedSchool = role === "DEVELOPER" ? school.trim() || "LabInsight AI" : school.trim();
     const response = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...payload, email, password, role, school: school.trim() })
+      body: JSON.stringify({ ...payload, email, password, role, school: normalizedSchool })
     });
 
     if (!response.ok) {
@@ -83,14 +84,30 @@ export default function RegisterPage() {
             />
             <div className="grid gap-2">
               <Label htmlFor="role">역할</Label>
-              <Select id="role" value={role} onChange={(event) => setRole(event.target.value as typeof role)}>
+              <Select
+                id="role"
+                value={role}
+                onChange={(event) => {
+                  const nextRole = event.target.value as typeof role;
+                  setRole(nextRole);
+                  if (nextRole === "DEVELOPER") setSchool("LabInsight AI");
+                  if (role === "DEVELOPER" && nextRole !== "DEVELOPER") setSchool("");
+                }}
+              >
                 <option value="STUDENT">학생</option>
                 <option value="TEACHER">교사</option>
                 <option value="DEVELOPER">개발자</option>
               </Select>
             </div>
 
-            <SchoolSearch value={school} onChange={(selected) => setSchool(selected.name)} />
+            {role === "DEVELOPER" ? (
+              <div className="rounded-lg border border-border bg-[#F3F6FB] p-4 text-sm font-semibold text-muted-foreground sm:col-span-2">
+                개발자 계정은 학교 선택 없이 생성됩니다. 개발자 인증 코드만 정확히 입력하면 기존 이메일도 개발자
+                계정으로 전환됩니다.
+              </div>
+            ) : (
+              <SchoolSearch value={school} onChange={(selected) => setSchool(selected.name)} />
+            )}
 
             {role === "STUDENT" ? (
               <Field label="학번" name="studentNumber" placeholder="4자리 숫자" inputMode="numeric" pattern="\d{4}" />

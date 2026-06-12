@@ -95,6 +95,9 @@ export default function LoginPage() {
               회원가입
             </Link>
           </p>
+          <p className="mt-3 rounded-lg bg-[#F3F6FB] p-3 text-xs font-semibold leading-5 text-muted-foreground">
+            개발자 계정이 아직 없다면 회원가입에서 역할을 개발자로 선택하고 개발자 인증 코드를 입력하세요.
+          </p>
         </CardContent>
       </Card>
     </main>

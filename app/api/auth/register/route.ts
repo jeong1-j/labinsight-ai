@@ -10,7 +10,7 @@ const registerSchema = z
     name: z.string().trim().min(2, "이름은 2글자 이상 입력하세요."),
     email: z.string().trim().toLowerCase().email("이메일 형식이 올바르지 않습니다."),
     password: z.string().min(8, "비밀번호는 8자 이상 입력하세요."),
-    school: z.string().trim().min(2, "학교를 검색해서 선택하세요."),
+    school: z.string().trim().optional(),
     studentNumber: z.string().optional(),
     gradeOrClass: z.string().optional(),
     role: z.enum(["STUDENT", "TEACHER", "DEVELOPER"]),
@@ -24,6 +24,13 @@ const registerSchema = z
         code: z.ZodIssueCode.custom,
         path: ["studentNumber"],
         message: "학생 학번은 숫자 4자리로 입력하세요."
+      });
+    }
+    if (value.role !== "DEVELOPER" && (value.school?.trim().length ?? 0) < 2) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["school"],
+        message: "학교를 검색해서 선택하세요."
       });
     }
   });
@@ -40,6 +47,7 @@ export async function POST(request: NextRequest) {
 
     const passwordHash = await bcrypt.hash(body.password, 12);
     const studentNumber = body.role === "STUDENT" ? (body.studentNumber ?? body.gradeOrClass ?? "").trim() : "";
+    const schoolName = body.role === "DEVELOPER" ? (body.school?.trim() || "LabInsight AI") : body.school?.trim() ?? "";
     const existingUser = await prisma.user.findUnique({
       where: { email: body.email },
       select: { id: true, role: true }
@@ -56,7 +64,7 @@ export async function POST(request: NextRequest) {
           name: body.name,
           passwordHash,
           role: body.role,
-          school: body.school,
+          school: schoolName,
           gradeOrClass: ""
         },
         select: {
@@ -76,7 +84,7 @@ export async function POST(request: NextRequest) {
         email: body.email,
         passwordHash,
         role: body.role,
-        school: body.school,
+        school: schoolName,
         gradeOrClass: studentNumber
       },
       select: {

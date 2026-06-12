@@ -1,0 +1,8 @@
+day,light_intensity_lux,temperature_c,humidity_percent,plant_height_trial_1_cm,plant_height_trial_2_cm,plant_height_trial_3_cm
+1,200,24.1,61,4.1,4.2,4.3
+2,250,24.3,60,4.4,4.6,4.5
+3,300,24.2,59,4.8,5.0,4.9
+4,350,24.5,58,5.3,5.5,5.4
+5,400,24.6,57,5.9,6.1,6.0
+6,450,24.8,56,6.5,6.8,6.7
+7,500,25.0,55,7.4,7.6,7.5

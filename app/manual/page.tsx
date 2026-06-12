@@ -1,5 +1,13 @@
 import Link from "next/link";
-import { ArrowLeft, BarChart3, ClipboardCheck, FileSpreadsheet, GraduationCap, MessageSquareText } from "lucide-react";
+import {
+  ArrowLeft,
+  BarChart3,
+  ClipboardCheck,
+  Download,
+  FileSpreadsheet,
+  GraduationCap,
+  MessageSquareText
+} from "lucide-react";
 import { BrandLockup } from "@/components/common/brand-lockup";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -135,6 +143,40 @@ export default function ManualPage() {
                 </tr>
               </tbody>
             </table>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>예시 실험 데이터</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-2">
+            <div className="rounded-xl border border-border bg-slate-50 p-4">
+              <h2 className="font-black text-slate-950">수단 III 기름 흡착 실험</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                조건별 4회 반복 측정값과 측정 기준, 단위가 포함된 예시입니다.
+              </p>
+              <Button asChild variant="accent" className="mt-4">
+                <Link href="/sample-data/sudan-iii-oil-adsorption.csv">
+                  <Download className="h-4 w-4" />
+                  CSV 다운로드
+                </Link>
+              </Button>
+            </div>
+            <div className="rounded-xl border border-border bg-slate-50 p-4">
+              <h2 className="font-black text-slate-950">빛의 세기와 식물 성장 실험</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                날짜별 빛의 세기와 식물 높이 3회 반복 측정값이 포함된 예시입니다.
+              </p>
+              <Button asChild variant="outline" className="mt-4">
+                <Link href="/sample-data/plant-growth-light-repeated.csv">
+                  <Download className="h-4 w-4" />
+                  CSV 다운로드
+                </Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </section>

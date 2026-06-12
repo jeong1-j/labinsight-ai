@@ -1,0 +1,5 @@
+condition,measurement_basis,unit,trial_1,trial_2,trial_3,trial_4,notes
+activated_carbon_A,sudan_iii_oil_adsorbed_area,cm2,10.2,10.8,9.9,10.5,largest adsorption area
+sponge_B,sudan_iii_oil_adsorbed_area,cm2,5.1,5.4,4.9,5.2,medium adsorption area
+sand_C,sudan_iii_oil_adsorbed_area,cm2,3.0,3.3,2.8,3.1,low adsorption area
+cotton_D,sudan_iii_oil_adsorbed_area,cm2,7.2,7.5,7.0,7.3,fiber absorbs stained oil
