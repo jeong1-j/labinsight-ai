@@ -4,8 +4,8 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import type { AppRole } from "@/lib/roles";
 
-export const TEACHER_INVITE_CODE = process.env.TEACHER_INVITE_CODE ?? "JSHS_TEACHER_2026";
-export const DEVELOPER_INVITE_CODE = process.env.DEVELOPER_INVITE_CODE ?? "LABINSIGHT_DEV_2026";
+export const TEACHER_INVITE_CODE = process.env.TEACHER_INVITE_CODE?.trim() ?? "";
+export const DEVELOPER_INVITE_CODE = process.env.DEVELOPER_INVITE_CODE?.trim() ?? "";
 
 export const authOptions: NextAuthOptions = {
   session: {

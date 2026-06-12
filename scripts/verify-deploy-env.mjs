@@ -1,4 +1,4 @@
-const required = ["DATABASE_URL", "NEXTAUTH_URL", "NEXTAUTH_SECRET"];
+const required = ["DATABASE_URL", "NEXTAUTH_URL", "NEXTAUTH_SECRET", "TEACHER_INVITE_CODE", "DEVELOPER_INVITE_CODE"];
 const missing = required.filter((key) => !process.env[key]?.trim());
 
 if (missing.length) {

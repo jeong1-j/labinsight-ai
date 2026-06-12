@@ -52,17 +52,7 @@ http://localhost:3000
 
 이 계정은 `npm run db:seed`를 실행했을 때만 로컬 SQLite DB에 생성됩니다. 기본 seed는 프로젝트를 미리 만들지 않습니다. 데모 프로젝트까지 필요할 때만 `ALLOW_DEMO_PROJECT=true npm run db:seed`처럼 별도 허용값을 지정하세요. 실제 배포에서는 사용자가 `/register`에서 직접 가입합니다.
 
-교사 가입 코드:
-
-```txt
-JSHS_TEACHER_2026
-```
-
-개발자 가입 코드:
-
-```txt
-LABINSIGHT_DEV_2026
-```
+교사/개발자 가입 코드는 화면이나 공개 README에 적지 않습니다. 로컬 `.env`와 Vercel Environment Variables에만 비공개로 설정하세요.
 
 ## 실제 배포
 
@@ -86,8 +76,8 @@ Vercel Project Settings > Environment Variables에 아래 값을 등록합니다
 DATABASE_URL="postgresql://..."
 NEXTAUTH_URL="https://your-project.vercel.app"
 NEXTAUTH_SECRET="긴_랜덤_문자열"
-TEACHER_INVITE_CODE="JSHS_TEACHER_2026"
-DEVELOPER_INVITE_CODE="LABINSIGHT_DEV_2026"
+TEACHER_INVITE_CODE="비공개_교사_인증_코드"
+DEVELOPER_INVITE_CODE="비공개_개발자_인증_코드"
 OPENAI_API_KEY=""
 OPENAI_MODEL="gpt-4o-mini"
 NEIS_API_KEY=""
@@ -151,7 +141,7 @@ npm run dev:account
 developer@labinsight.local / password123
 ```
 
-이미 학생으로 만든 이메일을 개발자 계정으로 바꾸려면 `/register`에서 역할을 `개발자`로 선택하고 `LABINSIGHT_DEV_2026` 코드를 입력해 다시 가입하면 됩니다. 같은 이메일이 이미 있으면 역할과 비밀번호가 개발자 계정으로 갱신됩니다.
+이미 학생으로 만든 이메일을 개발자 계정으로 바꾸려면 `/register`에서 역할을 `개발자`로 선택하고 비공개 개발자 인증 코드를 입력해 다시 가입하면 됩니다. 같은 이메일이 이미 있으면 역할과 비밀번호가 개발자 계정으로 갱신됩니다.
 
 ## 나이스 학교 검색
 

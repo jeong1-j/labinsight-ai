@@ -120,14 +120,28 @@ export default function RegisterPage() {
             {role === "TEACHER" ? (
               <div className="grid gap-2 sm:col-span-2">
                 <Label htmlFor="teacherCode">교사 인증 코드</Label>
-                <Input id="teacherCode" name="teacherCode" placeholder="JSHS_TEACHER_2026" required />
+                <Input
+                  id="teacherCode"
+                  name="teacherCode"
+                  type="password"
+                  placeholder="관리자에게 받은 인증 코드를 입력하세요"
+                  autoComplete="off"
+                  required
+                />
               </div>
             ) : null}
 
             {role === "DEVELOPER" ? (
               <div className="grid gap-2 sm:col-span-2">
                 <Label htmlFor="developerCode">개발자 인증 코드</Label>
-                <Input id="developerCode" name="developerCode" placeholder="LABINSIGHT_DEV_2026" required />
+                <Input
+                  id="developerCode"
+                  name="developerCode"
+                  type="password"
+                  placeholder="관리자에게 받은 인증 코드를 입력하세요"
+                  autoComplete="off"
+                  required
+                />
               </div>
             ) : null}
 

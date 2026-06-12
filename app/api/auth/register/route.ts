@@ -38,10 +38,10 @@ const registerSchema = z
 export async function POST(request: NextRequest) {
   try {
     const body = registerSchema.parse(await request.json());
-    if (body.role === "TEACHER" && body.teacherCode?.trim() !== TEACHER_INVITE_CODE) {
+    if (body.role === "TEACHER" && (!TEACHER_INVITE_CODE || body.teacherCode?.trim() !== TEACHER_INVITE_CODE)) {
       return Response.json({ error: "교사 인증 코드가 올바르지 않습니다." }, { status: 403 });
     }
-    if (body.role === "DEVELOPER" && body.developerCode?.trim() !== DEVELOPER_INVITE_CODE) {
+    if (body.role === "DEVELOPER" && (!DEVELOPER_INVITE_CODE || body.developerCode?.trim() !== DEVELOPER_INVITE_CODE)) {
       return Response.json({ error: "개발자 인증 코드가 올바르지 않습니다." }, { status: 403 });
     }
 
