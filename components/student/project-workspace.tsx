@@ -5,6 +5,11 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Download, FileSpreadsheet, Loader2, Save, Sparkles } from "lucide-react";
 import { ExperimentChart } from "@/components/charts/experiment-chart";
+import {
+  ExperimentHistoryComparison,
+  type ExperimentComparisonItem
+} from "@/components/student/experiment-history-comparison";
+import { RepeatedMeasurementPanel } from "@/components/student/repeated-measurement-panel";
 import { SpreadsheetDataGrid } from "@/components/student/spreadsheet-data-grid";
 import { FeedbackForm } from "@/components/teacher/feedback-form";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { profileData, type DataRow } from "@/lib/chart-engine";
 import { parseExperimentFile } from "@/lib/file-parser";
+import { summarizeRepeatedMeasurements } from "@/lib/repeated-measurements";
 import type { AppRole } from "@/lib/roles";
 
 type JsonObject = Record<string, unknown>;
@@ -32,6 +38,8 @@ type ProjectForWorkspace = {
   theoryValue: string | null;
   field: string;
   status: string;
+  createdAt: string;
+  updatedAt: string;
   student: {
     name: string;
     email: string;
@@ -77,19 +85,27 @@ const emptyRows: DataRow[] = [
 
 export function ProjectWorkspace({
   project,
+  previousProjects,
   role
 }: {
   project: ProjectForWorkspace;
+  previousProjects: ExperimentComparisonItem[];
   role: AppRole;
 }) {
   const router = useRouter();
   const [rows, setRows] = useState<DataRow[]>(project.experimentData?.rawData?.length ? project.experimentData.rawData : emptyRows);
   const [analysis, setAnalysis] = useState(project.analysisResult);
+  const [aiDraftContent, setAiDraftContent] = useState(project.report?.content ?? "");
   const [reportContent, setReportContent] = useState(project.report?.content ?? "");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState<"data" | "analysis" | "report" | "pdf" | null>(null);
   const reportRef = useRef<HTMLDivElement>(null);
   const profile = useMemo(() => profileData(rows), [rows]);
+  const projectText = `${project.title} ${project.purpose} ${project.method} ${project.dependentVariable}`;
+  const revisionHints = useMemo(
+    () => buildRevisionHints(reportContent, rows, analysis, project.dependentVariable),
+    [analysis, project.dependentVariable, reportContent, rows]
+  );
   const canEdit = role === "STUDENT";
 
   async function handleFile(file?: File) {
@@ -140,6 +156,7 @@ export function ProjectWorkspace({
       return;
     }
     setAnalysis(data.analysisResult);
+    setAiDraftContent((current) => current || data.reportDraft || "");
     setReportContent((current) => current || data.reportDraft || "");
     setMessage("AI 분석 결과가 생성되었습니다.");
     router.refresh();
@@ -155,8 +172,9 @@ export function ProjectWorkspace({
       setMessage(data.error ?? "보고서 생성에 실패했습니다.");
       return;
     }
-    setReportContent(data.report.content);
-    setMessage("AI 보고서 초안이 생성되었습니다.");
+    setAiDraftContent(data.report.content);
+    setReportContent((current) => current || data.report.content);
+    setMessage(reportContent ? "AI 초안이 왼쪽 비교 칸에 갱신되었습니다." : "AI 보고서 초안이 생성되었습니다.");
     router.refresh();
   }
 
@@ -268,7 +286,28 @@ export function ProjectWorkspace({
         </CardContent>
       </Card>
 
+      <RepeatedMeasurementPanel
+        rows={rows}
+        onRowsChange={setRows}
+        dependentVariable={project.dependentVariable}
+        projectText={projectText}
+        readOnly={!canEdit}
+      />
+
       {rows.length ? <ExperimentChart rows={normalizeRows(rows)} initialChartType={analysis?.chartType} /> : null}
+
+      <ExperimentHistoryComparison
+        currentProject={{
+          id: project.id,
+          title: project.title,
+          field: project.field,
+          status: project.status,
+          createdAt: project.createdAt,
+          updatedAt: project.updatedAt,
+          analysisResult: analysis ? { errorRate: analysis.errorRate } : null
+        }}
+        previousProjects={previousProjects}
+      />
 
       <Card>
         <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -320,11 +359,37 @@ export function ProjectWorkspace({
         </CardHeader>
         <CardContent className="grid gap-4">
           {canEdit ? (
-            <Textarea
-              value={reportContent}
-              onChange={(event) => setReportContent(event.target.value)}
-              className="min-h-[360px] font-mono text-sm"
-            />
+            <>
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="grid gap-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label>AI 초안</Label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setReportContent(aiDraftContent)}
+                      disabled={!aiDraftContent}
+                    >
+                      내 작성으로 복사
+                    </Button>
+                  </div>
+                  <pre className="min-h-[360px] whitespace-pre-wrap rounded-xl border border-border bg-slate-50 p-4 text-sm leading-7">
+                    {aiDraftContent || "초안 생성 버튼을 누르면 AI 초안이 표시됩니다."}
+                  </pre>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="studentReport">내 작성</Label>
+                  <Textarea
+                    id="studentReport"
+                    value={reportContent}
+                    onChange={(event) => setReportContent(event.target.value)}
+                    className="min-h-[360px] font-mono text-sm"
+                  />
+                </div>
+              </div>
+
+              <RevisionGuide hints={revisionHints} />
+            </>
           ) : (
             <pre className="whitespace-pre-wrap rounded-xl bg-slate-50 p-5 text-sm leading-7">{reportContent || "보고서 없음"}</pre>
           )}
@@ -430,6 +495,113 @@ function ObjectBlock({ title, data }: { title: string; data: unknown }) {
       </div>
     </div>
   );
+}
+
+type RevisionHint = {
+  title: string;
+  underline: string;
+  description: string;
+};
+
+function RevisionGuide({ hints }: { hints: RevisionHint[] }) {
+  return (
+    <div className="rounded-xl border border-border bg-white p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-sm font-black text-primary">보고서 수정 가이드</p>
+          <p className="mt-1 text-xs font-semibold text-muted-foreground">
+            밑줄 표시된 항목을 내 작성 칸에 보완하면 보고서 완성도가 올라갑니다.
+          </p>
+        </div>
+        <Badge variant={hints.length ? "warning" : "success"}>{hints.length ? `${hints.length}개 보완` : "보완 없음"}</Badge>
+      </div>
+      <div className="mt-4 grid gap-2">
+        {hints.length ? (
+          hints.map((hint) => (
+            <div key={hint.title} className="rounded-lg bg-slate-50 p-3 text-sm leading-6">
+              <p className="font-bold">{hint.title}</p>
+              <p className="mt-1">
+                <span className="underline decoration-danger decoration-2 underline-offset-4">{hint.underline}</span>
+                <span className="text-muted-foreground"> - {hint.description}</span>
+              </p>
+            </div>
+          ))
+        ) : (
+          <p className="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">
+            반복 측정, 측정 기준, 분석 결과가 보고서에 잘 반영되어 있습니다.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function buildRevisionHints(
+  content: string,
+  rows: DataRow[],
+  analysis: ProjectForWorkspace["analysisResult"],
+  dependentVariable: string
+): RevisionHint[] {
+  const hints: RevisionHint[] = [];
+  const repeated = summarizeRepeatedMeasurements(normalizeRows(rows));
+
+  if (!analysis) {
+    hints.push({
+      title: "AI 분석 결과 반영",
+      underline: "결과 해석과 오차 원인 분석",
+      description: "AI 분석 실행 후 해석, 가설 지지 여부, 오차 원인을 결론에 반영하세요."
+    });
+  }
+
+  if (!repeated.hasRepeatedMeasurements) {
+    hints.push({
+      title: "반복 측정 보완",
+      underline: "조건별 3회 이상 반복 측정",
+      description: "평균과 표준편차를 보고서 데이터 해석에 포함하면 신뢰도를 설명할 수 있습니다."
+    });
+  } else if (!/표준편차|standard deviation|std/i.test(content)) {
+    hints.push({
+      title: "표준편차 해석 추가",
+      underline: "평균과 표준편차",
+      description: "조건별 평균뿐 아니라 표준편차가 큰 조건의 원인도 함께 설명하세요."
+    });
+  }
+
+  if (repeated.numericColumnsNeedingBasis.length > 0 || !hasMeasurementBasis(rows)) {
+    hints.push({
+      title: "측정 기준 명시",
+      underline: `${dependentVariable || "측정값"}의 단위와 기준`,
+      description: "예: 흡착 면적(cm²), 색 농도, 흡광도처럼 숫자가 무엇을 뜻하는지 적으세요."
+    });
+  }
+
+  if (/아직|먼저|추가 데이터를 확보|분석되지 않았습니다/.test(content)) {
+    hints.push({
+      title: "초안 문구 수정",
+      underline: "아직 / 먼저 / 추가 데이터를 확보",
+      description: "AI 초안의 임시 표현을 실제 실험 결과에 맞는 확정 문장으로 바꾸세요."
+    });
+  }
+
+  if (!/개선|보완|후속/.test(content)) {
+    hints.push({
+      title: "개선 방향 추가",
+      underline: "개선점과 후속 연구",
+      description: "반복 측정 수, 통제 변인, 측정 위치 같은 다음 실험 개선 방향을 적으세요."
+    });
+  }
+
+  return hints;
+}
+
+function hasMeasurementBasis(rows: DataRow[]) {
+  const columns = Array.from(
+    rows.reduce((set, row) => {
+      Object.keys(row).forEach((key) => set.add(key));
+      return set;
+    }, new Set<string>())
+  );
+  return columns.some((column) => /basis|unit|단위|기준|cm|mm|m2|cm2|cm²|%|농도|면적|흡광|흡착/i.test(column));
 }
 
 function normalizeRows(rows: DataRow[]): DataRow[] {

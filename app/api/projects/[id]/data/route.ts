@@ -6,6 +6,7 @@ import { profileData } from "@/lib/chart-engine";
 import { jsonError, requireSession } from "@/lib/guards";
 import { getAccessibleProject } from "@/lib/project-access";
 import { toPrismaJson } from "@/lib/json";
+import { summarizeRepeatedMeasurements } from "@/lib/repeated-measurements";
 
 const dataSchema = z.object({
   rawData: z.array(z.record(z.union([z.string(), z.number(), z.null()]))).min(1),
@@ -22,18 +23,20 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     await getAccessibleProject(id, session.user.id, session.user.role);
     const body = dataSchema.parse(await request.json());
     const profile = profileData(body.rawData);
+    const repeatedMeasurements = summarizeRepeatedMeasurements(body.rawData);
+    const columns = { ...profile, repeatedMeasurements };
 
     const experimentData = await prisma.experimentData.upsert({
       where: { projectId: id },
       update: {
         rawData: toPrismaJson(body.rawData),
-        columns: toPrismaJson(profile),
+        columns: toPrismaJson(columns),
         uploadedFileName: body.uploadedFileName ?? null
       },
       create: {
         projectId: id,
         rawData: toPrismaJson(body.rawData),
-        columns: toPrismaJson(profile),
+        columns: toPrismaJson(columns),
         uploadedFileName: body.uploadedFileName ?? null
       }
     });
@@ -43,7 +46,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       data: { status: ProjectStatus.DATA_UPLOADED }
     });
 
-    return Response.json({ experimentData, profile });
+    return Response.json({ experimentData, profile, repeatedMeasurements });
   } catch (error) {
     return jsonError(error);
   }

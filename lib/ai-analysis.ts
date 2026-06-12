@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { profileData, type DataRow } from "@/lib/chart-engine";
+import { summarizeRepeatedMeasurements } from "@/lib/repeated-measurements";
 
 export type ExperimentAnalysisInput = {
   title: string;
@@ -40,6 +41,7 @@ export async function analyzeExperiment(input: ExperimentAnalysisInput): Promise
 async function analyzeWithOpenAI(input: ExperimentAnalysisInput): Promise<ExperimentAnalysisOutput> {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const profile = profileData(input.data);
+  const repeatedMeasurements = summarizeRepeatedMeasurements(input.data);
 
   const response = await openai.chat.completions.create({
     model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
@@ -56,6 +58,7 @@ async function analyzeWithOpenAI(input: ExperimentAnalysisInput): Promise<Experi
         content: JSON.stringify({
           experiment: input,
           dataProfile: profile,
+          repeatedMeasurements,
           requiredErrorCategories: [
             "측정 오차",
             "장비 오차",
@@ -75,7 +78,7 @@ async function analyzeWithOpenAI(input: ExperimentAnalysisInput): Promise<Experi
 
   return {
     chartType: parsed.chartType ?? profile.recommendedChart,
-    summaryStats: parsed.summaryStats ?? profile,
+    summaryStats: parsed.summaryStats ?? { ...profile, repeatedMeasurements },
     interpretation: parsed.interpretation ?? "데이터 경향을 분석했습니다.",
     hypothesisResult: parsed.hypothesisResult ?? "가설은 부분적으로 지지됩니다.",
     errorRate: typeof parsed.errorRate === "number" ? parsed.errorRate : estimateErrorRate(input),
@@ -88,6 +91,7 @@ async function analyzeWithOpenAI(input: ExperimentAnalysisInput): Promise<Experi
 
 function mockAnalysis(input: ExperimentAnalysisInput): ExperimentAnalysisOutput {
   const profile = profileData(input.data);
+  const repeatedMeasurements = summarizeRepeatedMeasurements(input.data);
   const errorRate = estimateErrorRate(input);
   const trend = describeTrend(input, profile.guessedIndependent, profile.guessedDependent);
 
@@ -102,7 +106,8 @@ function mockAnalysis(input: ExperimentAnalysisInput): ExperimentAnalysisOutput 
       outlierColumns: profile.columns.filter((column) => column.outliers > 0),
       guessedIndependent: profile.guessedIndependent,
       guessedDependent: profile.guessedDependent,
-      hasRepeatedMeasurements: profile.hasRepeatedMeasurements
+      hasRepeatedMeasurements: profile.hasRepeatedMeasurements,
+      repeatedMeasurements
     },
     interpretation: `${input.title} 데이터에서는 ${trend} ${input.independentVariable}와 ${input.dependentVariable}의 관계를 그래프로 확인하면 경향이 더 명확해집니다.`,
     hypothesisResult:
@@ -189,7 +194,18 @@ function describeTrend(input: ExperimentAnalysisInput, xColumn?: string, yColumn
 }
 
 function buildReportDraft(input: ExperimentAnalysisInput, profile = profileData(input.data)) {
+  const repeatedMeasurements = summarizeRepeatedMeasurements(input.data);
   const interpretation = `${input.independentVariable} 변화에 따른 ${input.dependentVariable} 변화를 ${profile.recommendedChart} 그래프로 표현하면 결과 경향을 확인할 수 있습니다.`;
+  const repeatedText = repeatedMeasurements.groups.length
+    ? repeatedMeasurements.groups
+        .map((group) => {
+          const rows = group.rows
+            .map((row) => `${row.condition}: 평균 ${row.mean ?? "-"}, 표준편차 ${row.standardDeviation ?? "-"}`)
+            .join("; ");
+          return `${group.label} 반복 측정 결과 - ${rows}`;
+        })
+        .join("\n")
+    : "조건별 3회 이상 반복 측정을 추가하면 평균과 표준편차를 비교할 수 있습니다.";
   return `# ${input.title}
 
 ## 실험 목적
@@ -200,6 +216,9 @@ ${input.hypothesis}
 
 ## 결과 해석
 ${interpretation}
+
+## 반복 측정 통계
+${repeatedText}
 
 ## 오차 원인 분석
 오차율이 높은 원인으로는 측정 위치 차이, 센서 반응 속도, 주변 환경 변화가 있을 수 있습니다. 개선 방법으로는 반복 측정 횟수를 늘리고 측정 시간과 측정 위치를 일정하게 유지하는 것이 필요합니다.
