@@ -40,6 +40,35 @@ export async function POST(request: NextRequest) {
 
     const passwordHash = await bcrypt.hash(body.password, 12);
     const studentNumber = body.role === "STUDENT" ? (body.studentNumber ?? body.gradeOrClass ?? "").trim() : "";
+    const existingUser = await prisma.user.findUnique({
+      where: { email: body.email },
+      select: { id: true, role: true }
+    });
+
+    if (existingUser) {
+      if (body.role === "STUDENT") {
+        return Response.json({ error: "이미 가입된 이메일입니다. 로그인 화면에서 로그인하세요." }, { status: 409 });
+      }
+
+      const user = await prisma.user.update({
+        where: { email: body.email },
+        data: {
+          name: body.name,
+          passwordHash,
+          role: body.role,
+          school: body.school,
+          gradeOrClass: ""
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true
+        }
+      });
+
+      return Response.json({ user, upgraded: true });
+    }
 
     const user = await prisma.user.create({
       data: {

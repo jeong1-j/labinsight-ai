@@ -102,10 +102,10 @@ export default function LoginPage() {
 }
 
 async function waitForSession() {
-  for (let attempt = 0; attempt < 5; attempt += 1) {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
     const session = await getSession();
     if (session?.user?.role) return session;
-    await new Promise((resolve) => window.setTimeout(resolve, 150));
+    await new Promise((resolve) => window.setTimeout(resolve, 250));
   }
   return getSession();
 }
